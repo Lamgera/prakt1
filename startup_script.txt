@@ -1,14 +1,11 @@
-# Тестирование новых команд
+# Тестирование команды cp
 ls
+cp readme.txt docs/copy.txt
+ls docs
+cp docs/copy.txt docs/duplicate.txt
+ls docs
+cp nonexistent docs/missing.txt
+cp docs/doc.txt bin/copied_doc.txt
 ls bin
-cd bin
-ls
-cd ..
 tree
-tree bin
-date
-uptime
-ls nonexistent
-cd nonexistent
-tree nonexistent
 exit

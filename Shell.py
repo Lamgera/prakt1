@@ -30,6 +30,9 @@ def create_default_vfs():
         "readme.txt": "Welcome to VFS",
         "bin": {
             "test.bin": base64.b64encode(b"binary data").decode('ascii')
+        },
+        "docs": {
+            "doc.txt": "Documentation here"
         }
     }
     with open(VFS_JSON_FILE, 'w') as f:
@@ -75,6 +78,8 @@ def execute_script(script_path):
                     tree_command(args)
                 elif command == "date":
                     date_command()
+                elif command == "cp":
+                    cp_command(args)
                 elif command == "exit":
                     return
                 else:
@@ -82,17 +87,54 @@ def execute_script(script_path):
     except Exception as e:
         print(f"Error executing script: {e}")
 
-def ls_command(args):
-    path = args[0] if args else '.'
-    current = vfs_data
-    for part in path.split('/'):
+def resolve_path(path_str, start_node=None):
+    current = start_node if start_node else vfs_data
+    parts = path_str.split('/')
+    for part in parts:
         if part == '.' or part == '':
             continue
         if part in current and isinstance(current[part], dict):
             current = current[part]
         else:
-            print(f"ls: cannot access '{path}': No such file or directory")
-            return
+            return None
+    return current
+
+def cp_command(args):
+    if len(args) != 2:
+        print("cp: missing destination or source")
+        return
+    src_path = args[0]
+    dst_path = args[1]
+
+    # Find source
+    src_parts = src_path.split('/')
+    src_name = src_parts[-1]
+    src_parent_path = '/'.join(src_parts[:-1])
+    src_parent = resolve_path(src_parent_path)
+    if not src_parent or src_name not in src_parent:
+        print(f"cp: cannot stat '{src_path}': No such file or directory")
+        return
+
+    # Find destination parent
+    dst_parts = dst_path.split('/')
+    dst_name = dst_parts[-1]
+    dst_parent_path = '/'.join(dst_parts[:-1])
+    dst_parent = resolve_path(dst_parent_path)
+    if not dst_parent:
+        print(f"cp: cannot stat '{dst_path}': No such file or directory")
+        return
+
+    # Copy item
+    src_item = src_parent[src_name]
+    dst_parent[dst_name] = src_item
+    print(f"cp: '{src_path}' -> '{dst_path}'")
+
+def ls_command(args):
+    path = args[0] if args else '.'
+    current = resolve_path(path)
+    if current is None:
+        print(f"ls: cannot access '{path}': No such file or directory")
+        return
     items = list(current.keys())
     print(' '.join(items))
 
@@ -101,15 +143,10 @@ def cd_command(args):
     if path == '..':
         print("cd: cannot go up from root")
         return
-    current = vfs_data
-    for part in path.split('/'):
-        if part == '.' or part == '':
-            continue
-        if part in current and isinstance(current[part], dict):
-            current = current[part]
-        else:
-            print(f"cd: no such directory: {path}")
-            return
+    current = resolve_path(path)
+    if current is None:
+        print(f"cd: no such directory: {path}")
+        return
     print(f"cd: {path}")
 
 def uptime_command():
@@ -117,15 +154,10 @@ def uptime_command():
 
 def tree_command(args):
     path = args[0] if args else '.'
-    current = vfs_data
-    for part in path.split('/'):
-        if part == '.' or part == '':
-            continue
-        if part in current and isinstance(current[part], dict):
-            current = current[part]
-        else:
-            print(f"tree: cannot access '{path}': No such file or directory")
-            return
+    current = resolve_path(path)
+    if current is None:
+        print(f"tree: cannot access '{path}': No such file or directory")
+        return
     def print_tree(node, prefix=""):
         keys = list(node.keys())
         for i, key in enumerate(keys):
@@ -170,6 +202,8 @@ def main():
                 tree_command(args)
             elif command == "date":
                 date_command()
+            elif command == "cp":
+                cp_command(args)
             elif command == "exit":
                 break
             else:
