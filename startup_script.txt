@@ -1,22 +1,14 @@
-# Тестовый стартовый скрипт
-# Проверка команд ls и cd
+# Тестирование новых команд
 ls
-ls level1
-ls level1/level2
-ls level1/level2/level3
-cd level1/level2/level3
+ls bin
+cd bin
 ls
-cd /
-ls
-
-# Проверка ошибок
+cd ..
+tree
+tree bin
+date
+uptime
 ls nonexistent
 cd nonexistent
-cd ..
-
-# Проверка работы с бинарными и текстовыми файлами
-ls bin
-ls level1/level2/level3
-
-# Проверка выхода
+tree nonexistent
 exit

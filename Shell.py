@@ -1,21 +1,12 @@
 import os
 import json
 import base64
+from datetime import datetime
 
 VFS_JSON_FILE = 'vfs.json'
 STARTUP_SCRIPT = "startup_script.txt"
 
 vfs_data = {}
-
-def create_default_vfs():
-    default_data = {
-        "readme.txt": "Welcome to VFS",
-        "bin": {
-            "test.bin": base64.b64encode(b"binary data").decode('ascii')
-        }
-    }
-    with open(VFS_JSON_FILE, 'w') as f:
-        json.dump(default_data, f, indent=2)
 
 def load_vfs_from_json():
     global vfs_data
@@ -33,6 +24,16 @@ def load_vfs_from_json():
         print(f"Error loading VFS: {e}")
         return False
     return True
+
+def create_default_vfs():
+    default_data = {
+        "readme.txt": "Welcome to VFS",
+        "bin": {
+            "test.bin": base64.b64encode(b"binary data").decode('ascii')
+        }
+    }
+    with open(VFS_JSON_FILE, 'w') as f:
+        json.dump(default_data, f, indent=2)
 
 def decode_base64_data(data):
     if isinstance(data, dict):
@@ -68,6 +69,12 @@ def execute_script(script_path):
                     ls_command(args)
                 elif command == "cd":
                     cd_command(args)
+                elif command == "uptime":
+                    uptime_command()
+                elif command == "tree":
+                    tree_command(args)
+                elif command == "date":
+                    date_command()
                 elif command == "exit":
                     return
                 else:
@@ -105,6 +112,34 @@ def cd_command(args):
             return
     print(f"cd: {path}")
 
+def uptime_command():
+    print("0 days, 0 hours, 0 minutes")
+
+def tree_command(args):
+    path = args[0] if args else '.'
+    current = vfs_data
+    for part in path.split('/'):
+        if part == '.' or part == '':
+            continue
+        if part in current and isinstance(current[part], dict):
+            current = current[part]
+        else:
+            print(f"tree: cannot access '{path}': No such file or directory")
+            return
+    def print_tree(node, prefix=""):
+        keys = list(node.keys())
+        for i, key in enumerate(keys):
+            is_last = i == len(keys) - 1
+            print(f"{prefix}{'└── ' if is_last else '├── '}{key}")
+            if isinstance(node[key], dict):
+                extension = "    " if is_last else "│   "
+                print_tree(node[key], prefix + extension)
+    print_tree(current)
+
+def date_command():
+    now = datetime.now()
+    print(now.strftime("%a %b %d %H:%M:%S %Y"))
+
 def main():
     print(f"VFS JSON: {VFS_JSON_FILE}")
     print(f"Startup Script: {STARTUP_SCRIPT}")
@@ -129,6 +164,12 @@ def main():
                 ls_command(args)
             elif command == "cd":
                 cd_command(args)
+            elif command == "uptime":
+                uptime_command()
+            elif command == "tree":
+                tree_command(args)
+            elif command == "date":
+                date_command()
             elif command == "exit":
                 break
             else:
