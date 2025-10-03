@@ -1,0 +1,7 @@
+{
+  "file1.txt": "Content 1",
+  "file2.txt": "Content 2",
+  "folder": {
+    "file3.txt": "Nested content"
+  }
+} 

@@ -1,5 +1,22 @@
-#скрипт без exit
-cd ..
-ls /tmp
+# Тестовый стартовый скрипт
+# Проверка команд ls и cd
+ls
+ls level1
+ls level1/level2
+ls level1/level2/level3
+cd level1/level2/level3
+ls
+cd /
+ls
 
-#сикс севен
+# Проверка ошибок
+ls nonexistent
+cd nonexistent
+cd ..
+
+# Проверка работы с бинарными и текстовыми файлами
+ls bin
+ls level1/level2/level3
+
+# Проверка выхода
+exit

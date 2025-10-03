@@ -1,8 +1,51 @@
 import os
+import json
+import base64
 
-#конфигурация
-VFS_PATH = "/vfs/path" #заглушка
+VFS_JSON_FILE = 'vfs.json'
 STARTUP_SCRIPT = "startup_script.txt"
+
+vfs_data = {}
+
+def create_default_vfs():
+    default_data = {
+        "readme.txt": "Welcome to VFS",
+        "bin": {
+            "test.bin": base64.b64encode(b"binary data").decode('ascii')
+        }
+    }
+    with open(VFS_JSON_FILE, 'w') as f:
+        json.dump(default_data, f, indent=2)
+
+def load_vfs_from_json():
+    global vfs_data
+    if not os.path.exists(VFS_JSON_FILE):
+        print(f"VFS file '{VFS_JSON_FILE}' not found. Creating default VFS...")
+        create_default_vfs()
+    try:
+        with open(VFS_JSON_FILE, 'r') as f:
+            raw_data = json.load(f)
+        vfs_data = decode_base64_data(raw_data)
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON format in '{VFS_JSON_FILE}'.")
+        return False
+    except Exception as e:
+        print(f"Error loading VFS: {e}")
+        return False
+    return True
+
+def decode_base64_data(data):
+    if isinstance(data, dict):
+        result = {}
+        for k, v in data.items():
+            if isinstance(v, str) and k.endswith('.bin'):
+                result[k] = base64.b64decode(v).decode('utf-8', errors='ignore')
+            elif isinstance(v, dict):
+                result[k] = decode_base64_data(v)
+            else:
+                result[k] = v
+        return result
+    return data
 
 def execute_script(script_path):
     if not os.path.exists(script_path):
@@ -22,9 +65,9 @@ def execute_script(script_path):
                 args = parts[1:]
 
                 if command == "ls":
-                    print(f"ls {' '.join(args)}")
+                    ls_command(args)
                 elif command == "cd":
-                    print(f"cd {' '.join(args)}")
+                    cd_command(args)
                 elif command == "exit":
                     return
                 else:
@@ -32,10 +75,43 @@ def execute_script(script_path):
     except Exception as e:
         print(f"Error executing script: {e}")
 
+def ls_command(args):
+    path = args[0] if args else '.'
+    current = vfs_data
+    for part in path.split('/'):
+        if part == '.' or part == '':
+            continue
+        if part in current and isinstance(current[part], dict):
+            current = current[part]
+        else:
+            print(f"ls: cannot access '{path}': No such file or directory")
+            return
+    items = list(current.keys())
+    print(' '.join(items))
+
+def cd_command(args):
+    path = args[0] if args else '/'
+    if path == '..':
+        print("cd: cannot go up from root")
+        return
+    current = vfs_data
+    for part in path.split('/'):
+        if part == '.' or part == '':
+            continue
+        if part in current and isinstance(current[part], dict):
+            current = current[part]
+        else:
+            print(f"cd: no such directory: {path}")
+            return
+    print(f"cd: {path}")
+
 def main():
-    print(f"VFS Path: {VFS_PATH}")
+    print(f"VFS JSON: {VFS_JSON_FILE}")
     print(f"Startup Script: {STARTUP_SCRIPT}")
     print()
+
+    if not load_vfs_from_json():
+        return
 
     if STARTUP_SCRIPT:
         execute_script(STARTUP_SCRIPT)
@@ -50,9 +126,9 @@ def main():
             args = parts[1:]
 
             if command == "ls":
-                print(f"ls {' '.join(args)}")
+                ls_command(args)
             elif command == "cd":
-                print(f"cd {' '.join(args)}")
+                cd_command(args)
             elif command == "exit":
                 break
             else:
