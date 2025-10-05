@@ -106,7 +106,6 @@ def cp_command(args):
     src_path = args[0]
     dst_path = args[1]
 
-    # Find source
     src_parts = src_path.split('/')
     src_name = src_parts[-1]
     src_parent_path = '/'.join(src_parts[:-1])
@@ -115,7 +114,6 @@ def cp_command(args):
         print(f"cp: cannot stat '{src_path}': No such file or directory")
         return
 
-    # Find destination parent
     dst_parts = dst_path.split('/')
     dst_name = dst_parts[-1]
     dst_parent_path = '/'.join(dst_parts[:-1])
@@ -124,7 +122,6 @@ def cp_command(args):
         print(f"cp: cannot stat '{dst_path}': No such file or directory")
         return
 
-    # Copy item
     src_item = src_parent[src_name]
     dst_parent[dst_name] = src_item
     print(f"cp: '{src_path}' -> '{dst_path}'")
