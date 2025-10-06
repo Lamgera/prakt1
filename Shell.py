@@ -1,11 +1,13 @@
 import os
 import json
 import base64
+import time
 from datetime import datetime
+
 
 VFS_JSON_FILE = 'vfs.json'
 STARTUP_SCRIPT = "startup_script.txt"
-
+start_time = None
 vfs_data = {}
 
 def load_vfs_from_json():
@@ -147,7 +149,11 @@ def cd_command(args):
     print(f"cd: {path}")
 
 def uptime_command():
-    print("0 days, 0 hours, 0 minutes")
+    elapsed = time.time() - start_time
+    minutes, seconds = divmod(int(elapsed), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    print(f"{days} days, {hours} hours, {minutes} minutes")
 
 def tree_command(args):
     path = args[0] if args else '.'
@@ -170,6 +176,8 @@ def date_command():
     print(now.strftime("%a %b %d %H:%M:%S %Y"))
 
 def main():
+    global start_time
+    start_time = time.time()
     print(f"VFS JSON: {VFS_JSON_FILE}")
     print(f"Startup Script: {STARTUP_SCRIPT}")
     print()
